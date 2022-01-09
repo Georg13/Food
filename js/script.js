@@ -322,4 +322,9 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal();
          }, 4000);
     }
+
+    fetch('http://localhost:3000/menu') // обращаемся к db.json 
+    // получаемы ответ обрабатываем 
+        .then(data => data.json()) // превращаю в обычный js объект
+        .then(res => console.log(res));
 });
