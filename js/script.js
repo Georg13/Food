@@ -150,9 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Вывод блоков меню через класс
 
         class MenuCard {
-            constructor(src, alt, title, descr, price, parentSelector, ...classes) {
-                this.src = src;
-                this.alt = alt;
+            constructor(img, altimg, title, descr, price, parentSelector, ...classes) {
+                this.img = img;
+                this.altimg = altimg;
                 this.title = title;
                 this.descr = descr;
                 this.price = price;
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
     
                 element.innerHTML = `
-                    <img src=${this.src} alt=${this.alt}>
+                    <img src=${this.img} alt=${this.altimg}>
                     <h3 class="menu__item-subtitle">${this.title}</h3>
                     <div class="menu__item-descr">${this.descr}</div>
                     <div class="menu__item-divider"></div>
@@ -193,33 +193,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.parent.append(element);
             }
         }
-        new MenuCard(
-            "img/tabs/vegy.jpg",
-            "vegy",
-            'Меню "Фитнес"',
-            'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-            9,
-            ".menu .container",
-            'menu__item', 'box'
-        ).render();
-    
-        new MenuCard(
-            "img/tabs/post.jpg",
-            "post",
-            'Меню "Постное"',
-            'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-            14,
-            ".menu .container"
-        ).render();
-    
-        new MenuCard(
-            "img/tabs/elite.jpg",
-            "elite",
-            'Меню “Премиум”',
-            'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-            21,
-            ".menu .container"
-        ).render();
+
+        // Функция вывода блоков с меню блюд 
+        const getResource = async (url) => { // тут ниечего не отправляется, только получаем
+            const res = await fetch(url); // говорим ждать выполнения операции 
+            /* у fetch есть два св-ва 
+            Мы можем увидеть HTTP-статус в свойствах ответа
+            ok – логическое значение: будет true, если код HTTP-статуса в диапазоне 200-299.
+            status – код статуса HTTP-запроса, например 200.
+            */
+           if (!res.ok) { // что-то пошло не так
+
+            // Испольузуем объект ошибки new Error
+            throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+           }
+            // возвращаем преобразованный в json промис
+            return await res.json(); // говорим ждать заверщения выполнения оп-ции а после вернуть ответ 
+        };
+
+        getResource('http://localhost:3000/menu')
+            .then(data => { // полуаем уже данные в формате json
+                            // {дустрктуризация объекта} ! 
+                data.forEach(({img, altimg, title, descr, price}) => {
+                                                                // туда куда пушим
+                    new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+                });
+            });
 
     // Forms
     const forms = document.querySelectorAll('form');
@@ -234,11 +233,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // Привязываем нашу функцию ко всем формам
 
     forms.forEach( item => {
-        postData(item);
+        bindPostData(item);
     });
 
+    // Постинг 
+
+    /* !НО внутри АСИНХРОННЫЙ код и он не ждет друг-друга
+    1) res = fetch( - тут только "обещание" еще нет ответа от сер-ра
+    2) return res.json(); - уже пытается его обработать, ОШИБКА
+    если это профукать то код будет работать неверно
+
+        -РЕШЕНИЕ-
+    Испульзуем парные операторы async и await
+    Существует специальный синтаксис для работы с промисами, который называется «async/await»
+    ! Они всегда используются вместе
+    async говоим что асинхронный код
+    async один простой смысл: эта функция всегда возвращает промис.
+    
+    await, которое можно использовать только внутри async-функций
+    await заставит интерпретатор JavaScript ждать до тех пор, пока промис справа от await не выполнится. 
+    После чего оно вернёт его результат, и выполнение кода продолжится.
+    хотя await и заставляет JavaScript дожидаться выполнения промиса, это не отнимает ресурсов процессора!
+    */
+
+    const postData = async (url, data) => { // говорим что функция возвращает промис
+        // получаем переменную res - промис
+        const res = await fetch(url, { // говорим ждать выполнения операции 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data  // передаваемые данные
+        });
+
+        // возвращаем преобразованный в json промис
+        return await res.json(); // говорим ждать заверщения выполнения оп-ции а после вернуть ответ 
+    };
+
     // Когда сервер должен получать в формате JSON
-    function postData(form){
+
+    // привязка какойто постинг данных
+    function bindPostData(form){
         form.addEventListener('submit', (e) => {
             e.preventDefault(); 
             
@@ -253,25 +288,30 @@ document.addEventListener('DOMContentLoaded', () => {
             form.insertAdjacentElement('afterend', statusMessage);
 
             // FormData
-            const formData = new FormData(form); 
+            const formData = new FormData(form); // Конструктор FormData() создаёт новые объект FormData
+        
+        // Преобразим formData в json  
+            /*
+            У объекта есть метод .entries() - кт превращает объект
+            в массив массивов 
+                Пример:
+                let x = {
+                    "a": 2,
+                    "b": "X"
+                }
+                console.log(Object.entries(x)); // [["a", 2], ["b", "X"]]
             
-            const object = {};
-            formData.forEach((value, key) => {
-                object[key] = value;
-            });
+            Св-во объекта .fromEntries() превращает масств в обычный объект
+            */
+            const json = JSON.stringify(Object.fromEntries(formData.entries()));
+            // 1- взяли formData кт собрала все данные с форм и рпевратили в массив
+            // 2- преобразовали полученный массив в классический объект
+            // 3- преобразовали классический объект в JSON
 
-            // создаем запрос при помощи fetch 
-                /* Промис созданный fetch при ошибке в ответе сервера(пример server1.php - 404) не перейдет в reject и не будет выполнять
-                .catch() так как, для него основная задча выполненны, т.е есть запрос на сервер и некий ответ, НО сработает если будет 
-                не работать сервер или сайт офлайн. Единственное что поеменяется св-ва статус*/
-            /*т.е  если fetch промис наткнется на ошибку HTTP запроса он не выкинет reject*/
-            fetch('server.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(object)
-            }).then(data => data.text())
+        /* 
+        Лучше выносить функционал по общению с сервером в отдульную функцию
+        */
+            postData('http://localhost:3000/requests', json)
             .then(data => {
                 //статус ЗАгрузки
                 console.log(data); // выводим в консоль то шо вернул сервер
@@ -304,16 +344,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="modal__title">${message}</div>
             </div>
         `;
-        /*
-         data-close>×</div> - кт создается динамически не будет действовать, 
-         тк его обработчики событии его не видят. см выше где прописывали код МОДАЛКИ
-         для того что бы они реагировали нужно делегирование событии
-        */
 
-         // Помещаем в модалку
-         document.querySelector('.modal').append(thanksModal);
+        // Помещаем в модалку
+        document.querySelector('.modal').append(thanksModal);
 
-         // Удаление сообщения через какоето время 
+        // Удаление сообщения через какоето время 
 
          setTimeout( () => {
             thanksModal.remove(); 
