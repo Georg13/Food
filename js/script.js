@@ -362,4 +362,262 @@ document.addEventListener('DOMContentLoaded', () => {
     // получаемы ответ обрабатываем 
         .then(data => data.json()) // превращаю в обычный js объект
         .then(res => console.log(res));
+    
+
+    //Slider
+    // 1 Кол-во слайдеров
+    const slides = document.querySelectorAll('.offer__slide'),
+          slider = document.querySelector('.offer__slider'),
+        // стрелочки 
+          prev = document.querySelector('.offer__slider-prev'),
+          next = document.querySelector('.offer__slider-next'),
+        // счетчик
+          total = document.querySelector('#total'),
+          current = document.querySelector('#current');
+    
+    let slideIndex = 1;
+
+    slider.style.position = 'relative';
+    /* Вариант 1   Простой слайдер 
+
+    // инициализация слайдера
+    showSlides(slideIndex);
+
+    // Общее кол-во слайдов в счетчике
+    if(slides.length < 10) {
+        total.textContent = `0${slides.length}`;
+    } else {
+        total.textContent = slides.length;
+    }
+
+    // Функция показа и скрытия слайдов
+    function showSlides(n) {
+        // Проверка граничных значении 
+        //Реализация перескока на первый и последний слайд(полная прокрутка)
+        if(n > slides.length) {
+            slideIndex = 1;
+        }
+
+        if(n < 1) {
+            slideIndex = slides.length;
+        }
+
+        // реализация слайдера
+        // 1 Скрываем все слайды
+        slides.forEach(item => item.style.display = 'none');
+        // 2 Отображаем нужный
+        slides[slideIndex - 1].style.display = 'block';
+
+        // номер слайдера Счетчик
+        if(slideIndex < 10) {
+            current.textContent = `0${slideIndex}`;
+        } else {
+            current.textContent = slideIndex;
+        }
+    }
+
+    // Переключение слайдов
+    function plusSlides(n) {
+        showSlides(slideIndex += n);
+    }
+
+    prev.addEventListener('click', () => {
+        plusSlides(-1);
+    });
+    next.addEventListener('click', () => {
+        plusSlides(1);
+    });
+    */
+
+    // Вриант 2 Слайдре карусель
+    /*  Правки в HTML
+    Обернуть слайды еще одну обёртку 
+        Было
+        <div class="offer__slider-wrapper">
+            <div class="offer__slide">
+            </div>
+            <div class="offer__slide">
+            ...
+        Стало
+        <div class="offer__slider-wrapper">
+            <div class="offer__slider-inner">
+                <div class="offer__slide">
+                </div>
+                <div class="offer__slide">
+            ...
+    Суть 
+    offer__slider-wrapper - окошка, за границами кт все скрыто
+    offer__slider-inner - контент со слайдами кт выходит за граници окошка
+    слайды будут выстроины в линию
+    */
+    // главная обёотка
+    const slidesWrapper = document.querySelector('.offer__slider-wrapper'),
+    // поле со слайдерами 
+          slidesField = document.querySelector('.offer__slider-inner'),
+    // ширина окошка 
+          width = window.getComputedStyle(slidesWrapper).width;
+        /*
+            Метод Window.getComputedStyle() возвращает объект, содержащий значения всех CSS-свойств элемента, 
+            полученных после применения всех активных таблиц стилей, и завершения базовых вычислений значений, 
+            которые они могут содержать. 
+            Приходит объект, используем его св-во width
+        */
+    // Шаг прокрутки 
+    let offset = 0;
+
+    // 1 Устанавливаем ширину поля со слайдерами 
+    slidesField.style.width = 100 * slides.length + '%';
+    // style
+    slidesField.style.display = 'flex';
+    slidesField.style.transition = '0.5s all';
+    slidesWrapper.style.overflow = 'hidden';
+
+    // 2 Устанавливаем всем слайдам одинаковую ширину 
+    slides.forEach(slide => {
+        slide.style.width = width;
+    });
+
+    // Общее кол-во слайдов в счетчике
+    if(slides.length < 10) {
+        total.textContent = `0${slides.length}`;
+        current.textContent = `0${slideIndex}`;
+    } else {
+        total.textContent = slides.length;
+        current.textContent = slideIndex;
+    }
+
+    // Прокрутка слайдера
+    next.addEventListener('click', () => {
+        if(offset == +width.slice(0, width.length - 2) * (slides.length - 1)) {
+            offset = 0;
+            /* т.к приходящее значение width в рх, то избавляемся от них и переводи в ЧИСЛО
+            +width.slice(0, width.length - 2)
+            slice(a, b) - вырезает строку от a до b(включительно) Так избавляемся от рх
+            +width - преобразует в число
+            т.е Если offset равен полной длине то прокручиваем на начло
+            */
+        } else {
+            // инача просто прокручиваем вперед
+            offset += +width.slice(0, width.length - 2);
+        }
+
+        // реализация прокрутки
+        slidesField.style.transform = `translateX(-${offset}px)`; 
+        
+        // Счетчик
+        if (slideIndex == slides.length) {
+            // если индекс равен бощемв кол-ву
+            slideIndex = 1;
+        } else {
+            slideIndex++;
+        }
+
+        if (slides.length < 10) {
+            current.textContent = `0${slideIndex}`;            
+        } else {
+            current.textContent = slideIndex;
+        }
+
+        // выделяем активную кнопку dots
+        dots.forEach(dot => dot.style.opacity = '.5');
+        dots[slideIndex - 1].style.opacity = 1;
+    });
+
+    prev.addEventListener('click', () => {
+        if(offset == 0) {
+            offset = +width.slice(0, width.length - 2) * (slides.length - 1);
+        } else {
+            // инача просто прокручиваем вперед
+            offset -= +width.slice(0, width.length - 2);
+        }
+        // реализация прокрутки 
+        slidesField.style.transform = `translateX(-${offset}px)`;
+
+         // Счетчик
+         if (slideIndex == 1) {
+            slideIndex = slides.length;
+        } else {
+            slideIndex--;
+        }
+
+        if (slides.length < 10) {
+            current.textContent = `0${slideIndex}`;            
+        } else {
+            current.textContent = slideIndex;
+        }
+
+        // выделяем активную кнопку dots
+        dots.forEach(dot => dot.style.opacity = '.5');
+        dots[slideIndex - 1].style.opacity = 1;
+    });
+
+// Кнопки переключения слайдера (dots)
+
+// 1 создаем обёртку для всех точек
+const indicators = document.createElement('ol'),
+      dots = [];
+
+indicators.classList.add('carousel-list');
+indicators.style.cssText = `
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 15;
+    display: flex;
+    justify-content: center;
+    margin-right: 15%;
+    margin-left: 15%;
+    list-style: none;
+`;
+slider.append(indicators);
+
+for (let i = 0; i < slides.length; i++) {
+    const dot = document.createElement('li');
+    dot.setAttribute('data-slide-to', i + 1);
+    dot.style.cssText = `
+        box-sizing: content-box;
+        flex: 0 1 auto;
+        width: 30px;
+        height: 6px;
+        margin-right: 3px;
+        margin-left: 3px;
+        cursor: pointer;
+        background-color: #fff;
+        background-clip: padding-box;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        opacity: .5;
+        transition: opacity .6s ease;
+    `;
+    // выделяем начальную актив кнопку
+    if (i == 0) {
+        dot.style.opacity = 1;
+    }
+
+    indicators.append(dot);
+    dots.push(dot);
+}
+
+    // добавляем функциональность dots
+    dots.forEach(dot => {
+        //вешаем на каждую кнопку обработчик события
+        dot.addEventListener('click', (e) => {
+            const slideTo = e.target.getAttribute('data-slide-to');
+            slideIndex = slideTo;
+            offset = +width.slice(0, width.length - 2) * (slideTo - 1);
+
+            slidesField.style.transform = `translateX(-${offset}px)`;
+
+            if (slides.length < 10) {
+                current.textContent = `0${slideIndex}`;            
+            } else {
+                current.textContent = slideIndex;
+            }
+
+            // выделяем активную кнопку dots
+            dots.forEach(dot => dot.style.opacity = '.5');
+            dots[slideIndex - 1].style.opacity = 1;
+        });
+    });
 });
