@@ -626,4 +626,89 @@ for (let i = 0; i < slides.length; i++) {
             dots[slideIndex - 1].style.opacity = 1;
         });
     });
+
+    // Calculator
+    const result = document.querySelector('.calculating__result span'); // сюдыпишем результат
+    let sex = 'female', // дефолтное значение
+        height, weight, age, 
+        ratio = 1.375; // дефолтное значение
+
+    function calcTotal() {
+        // Проверка ввода и выбора всех данных
+        if (!sex || !height || !weight || !age || !ratio) {
+            result.textContent = 'Нет данных';
+            // !сразу же прерываем функцию
+            return; 
+        }
+
+        if (sex === 'female') {
+            result.textContent = Math.round((447.6 + (9.2 * weight)+ (3.1 * height) - (4.3 * age)) * ratio);
+        } else {
+            result.textContent = Math.round((88.36 + (13.4 * weight)+ (4.8 * height) - (5.7 * age)) * ratio);
+        }
+    }
+
+    calcTotal();
+
+    // Получаем статические данные из калькулятора
+        // и вешаем на них событие КЛИК
+    function getStaticInformation(parentSelector, activClass) {
+        // изходя из структуры html, типа имя предка и див (получ. путь)
+        const elements = document.querySelectorAll(`${parentSelector} div`);
+
+        // Вешаем события на кнопки калькулятора
+        elements.forEach(elem => {
+            elem.addEventListener('click', (e) => {
+                // проверяем на что кликнули при помощи атрибта
+                if(e.target.getAttribute('data-ratio')) {
+                // если есть data-атрбут data-ratio
+                    ratio = +e.target.getAttribute('data-ratio'); // данные из data-ratio =
+                } else {
+                // инача, тот что с уникальным id
+                    sex = e.target.getAttribute('id'); // данные из id =
+                }
+    
+                elements.forEach(elem => {
+                    elem.classList.remove(activClass);
+                });
+    
+                e.target.classList.add(activClass);
+    
+                // Вызываем calcTotal(); после события 
+                calcTotal();
+            });
+        });
+    }
+
+    // вызываем для пола
+    getStaticInformation('#gender', 'calculating__choose-item_active');
+    // вызываем для активности
+    getStaticInformation('.calculating__choose_big', 'calculating__choose-item_active');
+
+    //Функция обработки вводимых данных калькулятоа
+    function getDynamicInformation(selector) {
+        const input = document.querySelector(selector);
+        
+        // вешаем события на input
+        input.addEventListener('input', () => {
+            //проверка (сравнение) по id
+            switch(input.getAttribute('id')) {
+                case 'height': // проверяем 
+                    height = +input.value; // получаем данные
+                    break; 
+                case 'weight':
+                    weight = +input.value;
+                    break;
+                case 'age':
+                    age = +input.value;
+                    break;
+            }
+         //вызываем calcTotal() после ввода данных
+         calcTotal(); 
+        });
+    }
+
+    getDynamicInformation('#height');
+    getDynamicInformation('#weight');
+    getDynamicInformation('#age');
 });
