@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Timer
 
-    const deadLine = '2022-01-10';
+    const deadLine = '2022-01-31';
 
     function getTimeRemaining(endtime) {
         let t = Date.parse(endtime) - Date.parse(new Date()),
@@ -486,11 +486,17 @@ document.addEventListener('DOMContentLoaded', () => {
         current.textContent = slideIndex;
     }
 
+    //Фнкция удаления букв из значения width 
+    function deleteNotDigits(str) {
+        return +str.replace(/\D/g, '');
+    }
     // Прокрутка слайдера
     next.addEventListener('click', () => {
-        if(offset == +width.slice(0, width.length - 2) * (slides.length - 1)) {
+                    // .replace(/\D/g, '' - заменяем все не цифры на пустоту
+        if(offset == deleteNotDigits(width) * (slides.length - 1)) {
             offset = 0;
-            /* т.к приходящее значение width в рх, то избавляемся от них и переводи в ЧИСЛО
+            /* Старый варик 
+            т.к приходящее значение width в рх, то избавляемся от них и переводи в ЧИСЛО
             +width.slice(0, width.length - 2)
             slice(a, b) - вырезает строку от a до b(включительно) Так избавляемся от рх
             +width - преобразует в число
@@ -498,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
             */
         } else {
             // инача просто прокручиваем вперед
-            offset += +width.slice(0, width.length - 2);
+            offset += deleteNotDigits(width);
         }
 
         // реализация прокрутки
@@ -525,10 +531,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     prev.addEventListener('click', () => {
         if(offset == 0) {
-            offset = +width.slice(0, width.length - 2) * (slides.length - 1);
+            offset = deleteNotDigits(width) * (slides.length - 1);
         } else {
             // инача просто прокручиваем вперед
-            offset -= +width.slice(0, width.length - 2);
+            offset -= deleteNotDigits(width);
         }
         // реализация прокрутки 
         slidesField.style.transform = `translateX(-${offset}px)`;
@@ -605,7 +611,7 @@ for (let i = 0; i < slides.length; i++) {
         dot.addEventListener('click', (e) => {
             const slideTo = e.target.getAttribute('data-slide-to');
             slideIndex = slideTo;
-            offset = +width.slice(0, width.length - 2) * (slideTo - 1);
+            offset = deleteNotDigits(width) * (slideTo - 1);
 
             slidesField.style.transform = `translateX(-${offset}px)`;
 
