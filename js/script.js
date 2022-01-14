@@ -629,10 +629,38 @@ for (let i = 0; i < slides.length; i++) {
 
     // Calculator
     const result = document.querySelector('.calculating__result span'); // сюдыпишем результат
-    let sex = 'female', // дефолтное значение
-        height, weight, age, 
-        ratio = 1.375; // дефолтное значение
+    let sex, height, weight, age, ratio;
+    // Проверяем есть ли данные в localStorage
+    if (localStorage.getItem('sex')) {
+        sex = localStorage.getItem('sex');
+    } else {
+        sex = 'female';
+        localStorage.setItem('sex', 'female');
+    }
+    if (localStorage.getItem('ratio')) {
+        ratio = localStorage.getItem('ratio');
+    } else {
+        ratio = 1.375;
+        localStorage.setItem('ratio', 1.375);
+    }
 
+    // функция установки активности по данным localStorage
+    function initLocalSettings(selector, activeClass) {
+        const elements = document.querySelectorAll(selector);
+
+        elements.forEach( elem => {
+            elem.classList.remove(activeClass);
+            if (elem.getAttribute('id') === localStorage.getItem('sex')) {
+                elem.classList.add(activeClass);
+            }
+            if(elem.getAttribute('data-ratio') === localStorage.getItem('ratio')) {
+                elem.classList.add(activeClass);
+            }
+        });
+    }
+
+    initLocalSettings('#gender div', 'calculating__choose-item_active');
+    initLocalSettings('.calculating__choose_big div', 'calculating__choose-item_active');
     function calcTotal() {
         // Проверка ввода и выбора всех данных
         if (!sex || !height || !weight || !age || !ratio) {
@@ -652,9 +680,9 @@ for (let i = 0; i < slides.length; i++) {
 
     // Получаем статические данные из калькулятора
         // и вешаем на них событие КЛИК
-    function getStaticInformation(parentSelector, activClass) {
+    function getStaticInformation(selector, activClass) {
         // изходя из структуры html, типа имя предка и див (получ. путь)
-        const elements = document.querySelectorAll(`${parentSelector} div`);
+        const elements = document.querySelectorAll(selector);
 
         // Вешаем события на кнопки калькулятора
         elements.forEach(elem => {
@@ -663,9 +691,13 @@ for (let i = 0; i < slides.length; i++) {
                 if(e.target.getAttribute('data-ratio')) {
                 // если есть data-атрбут data-ratio
                     ratio = +e.target.getAttribute('data-ratio'); // данные из data-ratio =
+                    // сохраняем в localStorage
+                    localStorage.setItem('ratio', +e.target.getAttribute('data-ratio'));
                 } else {
                 // инача, тот что с уникальным id
                     sex = e.target.getAttribute('id'); // данные из id =
+                    // сохраняем в localStorage
+                    localStorage.setItem('sex', e.target.getAttribute('id'));
                 }
     
                 elements.forEach(elem => {
@@ -681,16 +713,23 @@ for (let i = 0; i < slides.length; i++) {
     }
 
     // вызываем для пола
-    getStaticInformation('#gender', 'calculating__choose-item_active');
+    getStaticInformation('#gender div', 'calculating__choose-item_active');
     // вызываем для активности
-    getStaticInformation('.calculating__choose_big', 'calculating__choose-item_active');
+    getStaticInformation('.calculating__choose_big div', 'calculating__choose-item_active');
 
     //Функция обработки вводимых данных калькулятоа
     function getDynamicInformation(selector) {
         const input = document.querySelector(selector);
-        
+
         // вешаем события на input
         input.addEventListener('input', () => {
+            // проверяяем вводимые данные 
+            if(input.value.match(/\D/g)) { // если ввели не число
+                input.style.border = '1px solid red';
+            } else {
+                input.style.border = 'none';
+            }
+
             //проверка (сравнение) по id
             switch(input.getAttribute('id')) {
                 case 'height': // проверяем 
